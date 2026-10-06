@@ -1,6 +1,6 @@
 import { AiError, type ImageMediaType } from "@/lib/ai";
 import { checkOutfit } from "@/lib/checker";
-import { listItems } from "@/lib/db";
+import { CLOSET_ENABLED, listItems } from "@/lib/db";
 import { getWeather } from "@/lib/weather";
 
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp"];
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       event,
       details,
       weather: city ? await getWeather(city) : null,
-      closet: listItems().filter((item) => item.tagged),
+      closet: CLOSET_ENABLED ? listItems().filter((item) => item.tagged) : [],
     });
     return Response.json({ check });
   } catch (err) {

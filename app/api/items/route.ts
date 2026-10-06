@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { insertItem, listItems, UPLOAD_DIR } from "@/lib/db";
+import {
+  CLOSET_ENABLED,
+  closetDisabledResponse,
+  insertItem,
+  listItems,
+  UPLOAD_DIR,
+} from "@/lib/db";
 import { AiError, type ImageMediaType } from "@/lib/ai";
 import { EMPTY_TAGS, tagClothingImage } from "@/lib/tagger";
 
@@ -15,10 +21,12 @@ const EXTENSIONS: Record<ImageMediaType, string> = {
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export async function GET() {
+  if (!CLOSET_ENABLED) return Response.json({ items: [] });
   return Response.json({ items: listItems() });
 }
 
 export async function POST(request: Request) {
+  if (!CLOSET_ENABLED) return closetDisabledResponse();
   const form = await request.formData();
   const file = form.get("photo");
   if (!(file instanceof File)) {
@@ -38,7 +46,7 @@ export async function POST(request: Request) {
   const id = randomUUID();
   const imageFile = `${id}.${EXTENSIONS[mediaType]}`;
   const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(UPLOAD_DIR, imageFile), bytes);
+  await writeFile(path.join(/* turbopackIgnore: true */ UPLOAD_DIR, imageFile), bytes);
 
   // A failed tagging call still saves the item, so the user can tag it by hand.
   try {

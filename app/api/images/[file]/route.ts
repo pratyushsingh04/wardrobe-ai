@@ -16,7 +16,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/images/[fil
     return new Response("Not found", { status: 404 });
   }
   try {
-    const bytes = await readFile(path.join(UPLOAD_DIR, file));
+    const bytes = await readFile(path.join(/* turbopackIgnore: true */ UPLOAD_DIR, file));
     return new Response(new Uint8Array(bytes), {
       headers: {
         "Content-Type": CONTENT_TYPES[match[1]],

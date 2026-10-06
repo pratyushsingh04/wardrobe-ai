@@ -3,9 +3,19 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type { Item, ItemTags } from "./types";
 
-export const DATA_DIR = path.join(process.cwd(), "data");
-export const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
-mkdirSync(UPLOAD_DIR, { recursive: true });
+export const DATA_DIR = path.join(/* turbopackIgnore: true */ process.cwd(), "data");
+export const UPLOAD_DIR = path.join(/* turbopackIgnore: true */ DATA_DIR, "uploads");
+
+// Vercel functions have no persistent disk, so the closet (photos + SQLite) only runs on a real server.
+export const CLOSET_ENABLED = !process.env.VERCEL;
+if (CLOSET_ENABLED) mkdirSync(UPLOAD_DIR, { recursive: true });
+
+export function closetDisabledResponse() {
+  return Response.json(
+    { error: "The closet is not available on this deployment." },
+    { status: 501 },
+  );
+}
 
 type Row = {
   id: string;
@@ -25,7 +35,7 @@ const globalForDb = globalThis as unknown as { wardrobeDb?: DatabaseSync };
 
 function getDb() {
   if (!globalForDb.wardrobeDb) {
-    const db = new DatabaseSync(path.join(DATA_DIR, "wardrobe.db"));
+    const db = new DatabaseSync(path.join(/* turbopackIgnore: true */ DATA_DIR, "wardrobe.db"));
     db.exec(`
       CREATE TABLE IF NOT EXISTS items (
         id TEXT PRIMARY KEY,

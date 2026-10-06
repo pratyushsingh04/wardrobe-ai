@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { listItems } from "@/lib/db";
+import { CLOSET_ENABLED, closetDisabledResponse, listItems } from "@/lib/db";
 import { suggestOutfit } from "@/lib/outfit";
 import { OCCASIONS, type Outfit } from "@/lib/types";
 import { getWeather } from "@/lib/weather";
@@ -11,6 +11,7 @@ const RequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (!CLOSET_ENABLED) return closetDisabledResponse();
   const parsed = RequestSchema.safeParse(await request.json());
   if (!parsed.success) {
     return Response.json({ error: "Pick an occasion." }, { status: 400 });

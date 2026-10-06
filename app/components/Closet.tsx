@@ -3,19 +3,33 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { resizePhoto } from "@/lib/resize";
-import { CATEGORIES, type Category, type Item, type ItemTags } from "@/lib/types";
+import {
+  CATEGORIES,
+  type Category,
+  type Item,
+  type ItemTags,
+} from "@/lib/types";
 import EditItemDialog from "./EditItemDialog";
 import OutfitCheck from "./OutfitCheck";
 import OutfitPanel from "./OutfitPanel";
 import { Chip, ghostButton, SectionHeading } from "./ui";
 
 const STEPS = [
-  { title: "Snap it", text: "Upload a photo of the outfit, worn or laid out on the bed." },
-  { title: "Pick the event", text: "Wedding, interview, date, college. Add the city for live weather." },
-  { title: "Get the verdict", text: "A score out of 100, what works, what to fix and what would be ideal." },
+  {
+    title: "Snap it",
+    text: "Upload a photo of the outfit, worn or laid out on the bed.",
+  },
+  {
+    title: "Pick the event",
+    text: "Wedding, interview, date, college. Add the city for live weather.",
+  },
+  {
+    title: "Get the verdict",
+    text: "A score out of 100, what works, what to fix and what would be ideal.",
+  },
 ];
 
-export default function Closet() {
+export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
   const [items, setItems] = useState<Item[] | null>(null);
   const [filter, setFilter] = useState<Category | "all">("all");
   const [uploading, setUploading] = useState(0);
@@ -24,11 +38,14 @@ export default function Closet() {
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!closetEnabled) return;
     fetch("/api/items")
       .then((res) => res.json())
       .then((data) => setItems(data.items))
-      .catch(() => setNotice("Could not load your closet. Refresh to try again."));
-  }, []);
+      .catch(() =>
+        setNotice("Could not load your closet. Refresh to try again."),
+      );
+  }, [closetEnabled]);
 
   async function uploadOne(file: File) {
     const body = new FormData();
@@ -37,7 +54,8 @@ export default function Closet() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     setItems((current) => [data.item, ...(current ?? [])]);
-    if (data.warning) setNotice(`${data.warning} The photo was saved without tags.`);
+    if (data.warning)
+      setNotice(`${data.warning} The photo was saved without tags.`);
   }
 
   async function handleFiles(files: FileList | null) {
@@ -66,7 +84,9 @@ export default function Closet() {
       setNotice(data.error);
       return;
     }
-    setItems((current) => current!.map((item) => (item.id === id ? data.item : item)));
+    setItems((current) =>
+      current!.map((item) => (item.id === id ? data.item : item)),
+    );
     setEditing(null);
   }
 
@@ -80,7 +100,9 @@ export default function Closet() {
     setItems((current) => current!.filter((other) => other.id !== item.id));
   }
 
-  const visible = (items ?? []).filter((item) => filter === "all" || item.category === filter);
+  const visible = (items ?? []).filter(
+    (item) => filter === "all" || item.category === filter,
+  );
   const usedCategories = CATEGORIES.filter((category) =>
     items?.some((item) => item.category === category),
   );
@@ -94,15 +116,28 @@ export default function Closet() {
             Wardrobe <span className="italic text-accent">AI</span>
           </a>
           <nav className="flex items-center gap-1 text-sm font-medium sm:gap-2">
-            <a href="#check" className="rounded-full px-3 py-1.5 transition hover:bg-accent-soft">
+            <a
+              href="#check"
+              className="rounded-full px-3 py-1.5 transition hover:bg-accent-soft"
+            >
               Check
             </a>
-            <a href="#suggest" className="rounded-full px-3 py-1.5 transition hover:bg-accent-soft">
-              Suggest
-            </a>
-            <a href="#closet" className="rounded-full px-3 py-1.5 transition hover:bg-accent-soft">
-              Closet
-            </a>
+            {closetEnabled && (
+              <>
+                <a
+                  href="#suggest"
+                  className="rounded-full px-3 py-1.5 transition hover:bg-accent-soft"
+                >
+                  Suggest
+                </a>
+                <a
+                  href="#closet"
+                  className="rounded-full px-3 py-1.5 transition hover:bg-accent-soft"
+                >
+                  Closet
+                </a>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -120,11 +155,12 @@ export default function Closet() {
               Your AI stylist, honest every time
             </p>
             <h1 className="mx-auto mt-5 max-w-3xl font-display text-5xl leading-[1.02] sm:text-7xl">
-              Is this outfit <span className="italic text-accent">right</span> for the event?
+              Is this outfit <span className="italic text-accent">right</span>{" "}
+              for the event?
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base text-muted sm:text-lg">
-              Upload what you plan to wear and pick where you&apos;re going. Get a score out of 100,
-              what to fix, and what would be ideal.
+              Upload what you plan to wear and pick where you&apos;re going. Get
+              a score out of 100, what to fix, and what would be ideal.
             </p>
           </section>
 
@@ -132,10 +168,15 @@ export default function Closet() {
             <OutfitCheck />
           </section>
 
-          <section aria-label="How it works" className="mt-12 grid gap-6 sm:grid-cols-3">
+          <section
+            aria-label="How it works"
+            className="mt-12 grid gap-6 sm:grid-cols-3"
+          >
             {STEPS.map((step, index) => (
               <div key={step.title} className="flex gap-4">
-                <span className="font-display text-5xl leading-none text-accent">{index + 1}</span>
+                <span className="font-display text-5xl leading-none text-accent">
+                  {index + 1}
+                </span>
                 <div>
                   <h3 className="font-semibold">{step.title}</h3>
                   <p className="mt-1 text-sm text-muted">{step.text}</p>
@@ -144,128 +185,162 @@ export default function Closet() {
             ))}
           </section>
 
-          <section id="suggest" className="mt-20">
-            <SectionHeading eyebrow="From your closet" title="Not sure what to wear?">
-              Pick an occasion and get an outfit built from the clothes you own, matched to
-              today&apos;s weather.
-            </SectionHeading>
-            <div className="mt-6">
-              {hasTaggedItems ? (
-                <OutfitPanel />
-              ) : (
-                <p className="rounded-[28px] border border-dashed border-line px-6 py-10 text-center text-sm text-muted">
-                  Add a few clothes to your closet below and this will start suggesting outfits.
-                </p>
-              )}
-            </div>
-          </section>
-
-          <section id="closet" className="mt-20 pb-20">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <SectionHeading eyebrow="My closet" title="Everything you own, tagged">
-                {items
-                  ? `${items.length} ${items.length === 1 ? "item" : "items"}. Add one piece per photo.`
-                  : "Loading your closet…"}
-              </SectionHeading>
-              <label className={`${ghostButton} cursor-pointer has-disabled:cursor-wait has-disabled:opacity-60`}>
-                {uploading > 0
-                  ? `Tagging ${uploading} ${uploading === 1 ? "photo" : "photos"}…`
-                  : "+ Add clothes"}
-                <input
-                  ref={fileInput}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  disabled={uploading > 0}
-                  className="sr-only"
-                  onChange={(event) => handleFiles(event.target.files)}
-                />
-              </label>
-            </div>
-
-            {notice && (
-              <div
-                role="alert"
-                className="mt-6 flex items-start justify-between gap-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm"
-              >
-                <p>{notice}</p>
-                <button onClick={() => setNotice(null)} className="shrink-0 font-medium underline">
-                  Dismiss
-                </button>
-              </div>
-            )}
-
-            {usedCategories.length > 1 && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {(["all", ...usedCategories] as const).map((category) => (
-                  <Chip key={category} active={filter === category} onClick={() => setFilter(category)}>
-                    {category}
-                  </Chip>
-                ))}
-              </div>
-            )}
-
-            {items?.length === 0 && uploading === 0 && (
-              <div className="mt-6 rounded-[28px] border border-dashed border-line px-6 py-16 text-center">
-                <p className="font-display text-3xl">Your closet is empty</p>
-                <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
-                  Add a photo of a shirt, jeans or shoes. The AI names it and tags its colour,
-                  fabric, season and occasion.
-                </p>
-              </div>
-            )}
-
-            <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {visible.map((item) => (
-                <li
-                  key={item.id}
-                  className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_40px_-28px_rgba(60,30,10,0.5)]"
+          {closetEnabled && (
+            <>
+              <section id="suggest" className="mt-20">
+                <SectionHeading
+                  eyebrow="From your closet"
+                  title="Not sure what to wear?"
                 >
-                  <div className="relative aspect-[3/4] overflow-hidden bg-line">
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.name}
-                      fill
-                      unoptimized
-                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                      className="object-cover transition duration-500 group-hover:scale-105"
+                  Pick an occasion and get an outfit built from the clothes you
+                  own, matched to today&apos;s weather.
+                </SectionHeading>
+                <div className="mt-6">
+                  {hasTaggedItems ? (
+                    <OutfitPanel />
+                  ) : (
+                    <p className="rounded-[28px] border border-dashed border-line px-6 py-10 text-center text-sm text-muted">
+                      Add a few clothes to your closet below and this will start
+                      suggesting outfits.
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              <section id="closet" className="mt-20 pb-20">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <SectionHeading
+                    eyebrow="My closet"
+                    title="Everything you own, tagged"
+                  >
+                    {items
+                      ? `${items.length} ${items.length === 1 ? "item" : "items"}. Add one piece per photo.`
+                      : "Loading your closet…"}
+                  </SectionHeading>
+                  <label
+                    className={`${ghostButton} cursor-pointer has-disabled:cursor-wait has-disabled:opacity-60`}
+                  >
+                    {uploading > 0
+                      ? `Tagging ${uploading} ${uploading === 1 ? "photo" : "photos"}…`
+                      : "+ Add clothes"}
+                    <input
+                      ref={fileInput}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      disabled={uploading > 0}
+                      className="sr-only"
+                      onChange={(event) => handleFiles(event.target.files)}
                     />
+                  </label>
+                </div>
+
+                {notice && (
+                  <div
+                    role="alert"
+                    className="mt-6 flex items-start justify-between gap-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm"
+                  >
+                    <p>{notice}</p>
+                    <button
+                      onClick={() => setNotice(null)}
+                      className="shrink-0 font-medium underline"
+                    >
+                      Dismiss
+                    </button>
                   </div>
-                  <div className="flex flex-1 flex-col gap-2.5 p-4">
-                    <div>
-                      <p className="font-medium leading-snug">{item.name}</p>
-                      <p className="text-xs capitalize text-muted">
-                        {item.tagged
-                          ? [item.category, item.fabric].filter(Boolean).join(" · ")
-                          : "Not tagged yet"}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[...item.colors, ...item.seasons, ...item.occasions].map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs capitalize"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-auto flex gap-4 pt-1 text-xs font-medium">
-                      <button onClick={() => setEditing(item)} className="underline underline-offset-2">
-                        Edit tags
-                      </button>
-                      <button
-                        onClick={() => remove(item)}
-                        className="text-red-600 underline underline-offset-2 dark:text-red-400"
+                )}
+
+                {usedCategories.length > 1 && (
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {(["all", ...usedCategories] as const).map((category) => (
+                      <Chip
+                        key={category}
+                        active={filter === category}
+                        onClick={() => setFilter(category)}
                       >
-                        Remove
-                      </button>
-                    </div>
+                        {category}
+                      </Chip>
+                    ))}
                   </div>
-                </li>
-              ))}
-            </ul>
-          </section>
+                )}
+
+                {items?.length === 0 && uploading === 0 && (
+                  <div className="mt-6 rounded-[28px] border border-dashed border-line px-6 py-16 text-center">
+                    <p className="font-display text-3xl">
+                      Your closet is empty
+                    </p>
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
+                      Add a photo of a shirt, jeans or shoes. The AI names it
+                      and tags its colour, fabric, season and occasion.
+                    </p>
+                  </div>
+                )}
+
+                <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {visible.map((item) => (
+                    <li
+                      key={item.id}
+                      className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_40px_-28px_rgba(60,30,10,0.5)]"
+                    >
+                      <div className="relative aspect-[3/4] overflow-hidden bg-line">
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.name}
+                          fill
+                          unoptimized
+                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                          className="object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-2.5 p-4">
+                        <div>
+                          <p className="font-medium leading-snug">
+                            {item.name}
+                          </p>
+                          <p className="text-xs capitalize text-muted">
+                            {item.tagged
+                              ? [item.category, item.fabric]
+                                  .filter(Boolean)
+                                  .join(" · ")
+                              : "Not tagged yet"}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            ...item.colors,
+                            ...item.seasons,
+                            ...item.occasions,
+                          ].map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs capitalize"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-auto flex gap-4 pt-1 text-xs font-medium">
+                          <button
+                            onClick={() => setEditing(item)}
+                            className="underline underline-offset-2"
+                          >
+                            Edit tags
+                          </button>
+                          <button
+                            onClick={() => remove(item)}
+                            className="text-red-600 underline underline-offset-2 dark:text-red-400"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </>
+          )}
+          {!closetEnabled && <div className="pb-20" />}
         </div>
       </main>
 
