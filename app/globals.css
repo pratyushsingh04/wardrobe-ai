@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f1ea;
+  --surface: #fffdf9;
+  --foreground: #1c1917;
+  --muted: #6f665e;
+  --line: #e4dbd0;
+  --accent: #b4532a;
+  --accent-ink: #ffffff;
+  --accent-soft: #f4e4d8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #141110;
+    --surface: #1d1917;
+    --foreground: #f3ede6;
+    --muted: #a69c92;
+    --line: #342d28;
+    --accent: #e58e5f;
+    --accent-ink: #1c1108;
+    --accent-soft: #33221a;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-instrument-serif);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes ring {
+  from {
+    stroke-dashoffset: var(--ring-full);
+  }
+}
+
+@keyframes grow {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes scan {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(400%);
+  }
+}
+
+@utility animate-rise {
+  animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@utility animate-ring {
+  animation: ring 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@utility animate-grow {
+  animation: grow 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@utility animate-scan {
+  animation: scan 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-rise,
+  .animate-ring,
+  .animate-grow,
+  .animate-scan {
+    animation: none;
+  }
+}
