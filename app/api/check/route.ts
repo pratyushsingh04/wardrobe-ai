@@ -3,6 +3,9 @@ import { checkOutfit } from "@/lib/checker";
 import { CLOSET_ENABLED, listItems } from "@/lib/db";
 import { getWeather } from "@/lib/weather";
 
+// Free models can be slow or need a fallback, so allow more than the default function time.
+export const maxDuration = 120;
+
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp"];
 
 // The Claude API accepts images up to 5 MB each.
