@@ -300,8 +300,8 @@ export default function Lookbook({ check, event }: { check: OutfitCheck; event: 
               role="tab"
               aria-selected={page === index}
               onClick={() => go(index)}
-              className={`relative rounded-full px-4 py-2 text-sm font-medium transition ${
-                page === index ? "text-accent-ink" : "text-muted hover:text-foreground"
+              className={`relative rounded-full px-4 py-2 text-sm font-medium transition duration-300 hover:-translate-y-0.5 ${
+                page === index ? "text-accent-ink" : "text-muted hover:bg-accent-soft hover:text-accent-2"
               }`}
             >
               {page === index && (

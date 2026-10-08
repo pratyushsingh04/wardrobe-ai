@@ -1,7 +1,7 @@
 "use client";
 
-import { animate, AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
 import { STYLE_ICONS } from "./icons";
 import { EASE, LOADER_BRAND_MS, LOADER_LOAD_MS } from "./motion";
 import { label } from "./ui";
@@ -16,7 +16,6 @@ type Phase = "loading" | "brand" | "done";
 export default function Preloader() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [active, setActive] = useState(0);
-  const counter = useRef<HTMLSpanElement>(null);
   const reduced = useReducedMotion();
 
   useEffect(() => {
@@ -24,13 +23,6 @@ export default function Preloader() {
       const skip = setTimeout(() => setPhase("done"), 150);
       return () => clearTimeout(skip);
     }
-    const count = animate(0, 100, {
-      duration: LOADER_LOAD_MS / 1000,
-      ease: [0.3, 0, 0.2, 1],
-      onUpdate: (value) => {
-        if (counter.current) counter.current.textContent = String(Math.round(value)).padStart(3, "0");
-      },
-    });
     const step = setInterval(
       () => setActive((index) => Math.min(index + 1, STYLE_ICONS.length - 1)),
       LOADER_LOAD_MS / STYLE_ICONS.length,
@@ -38,7 +30,6 @@ export default function Preloader() {
     const toBrand = setTimeout(() => setPhase("brand"), LOADER_LOAD_MS + 120);
     const toDone = setTimeout(() => setPhase("done"), LOADER_LOAD_MS + 120 + LOADER_BRAND_MS);
     return () => {
-      count.stop();
       clearInterval(step);
       clearTimeout(toBrand);
       clearTimeout(toDone);
@@ -149,8 +140,8 @@ export default function Preloader() {
               </AnimatePresence>
             </div>
 
-            <div className="flex items-end justify-between gap-6 px-5 pb-6 sm:px-8">
-              <ul className="flex flex-wrap gap-3">
+            <div className="flex justify-center px-5 pb-7 sm:px-8">
+              <ul className="flex flex-wrap justify-center gap-4">
                 {STYLE_ICONS.map((item, index) => (
                   <li
                     key={item.label}
@@ -164,9 +155,6 @@ export default function Preloader() {
                   </li>
                 ))}
               </ul>
-              <p className="font-display text-6xl leading-none tabular-nums sm:text-8xl">
-                <span ref={counter}>000</span>
-              </p>
             </div>
 
             <motion.div

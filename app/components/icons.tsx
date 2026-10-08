@@ -28,7 +28,7 @@ export function LineIcon({ path, className }: { path: string; className?: string
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d={path} />
+      <path d={path} pathLength={1} />
     </svg>
   );
 }

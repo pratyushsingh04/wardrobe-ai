@@ -13,6 +13,7 @@ import { CountUp, EASE, INTRO_SECONDS, Reveal, usePointerGlow, WordReveal } from
 import OutfitCheck from "./OutfitCheck";
 import OutfitPanel from "./OutfitPanel";
 import Preloader from "./Preloader";
+import TiltCard from "./TiltCard";
 import { Chip, ghostButton, label, primaryButton, SectionHeading } from "./ui";
 
 const STEPS = [
@@ -346,26 +347,40 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
             <ul className="mt-10 grid gap-4 md:grid-cols-2">
               {LOOKBOOK.map((page, index) => (
                 <li key={page.title}>
-                  <Reveal
-                    delay={(index % 2) * 0.12}
-                    className="glow-card group relative h-full overflow-hidden rounded-3xl p-7 hover:-translate-y-1.5"
-                  >
-                    <LineIcon
-                      path={iconPath(page.icon)}
-                      className="pointer-events-none absolute -right-6 -top-6 h-44 w-44 text-line transition duration-700 group-hover:rotate-6 group-hover:scale-110 group-hover:text-accent/50"
-                    />
-                    <p className="relative font-display text-2xl text-accent">
-                      {String(index + 1).padStart(2, "0")}
-                    </p>
-                    <h3 className="relative mt-10 font-display text-4xl leading-tight">{page.title}</h3>
-                    <p className="relative mt-3 max-w-sm text-sm text-muted sm:text-base">{page.text}</p>
-                    <ul className="relative mt-6 flex flex-wrap gap-2">
-                      {page.tags.map((tag) => (
-                        <li key={tag} className="rounded-full border border-line px-3 py-1 text-xs text-muted">
-                          {tag}
-                        </li>
-                      ))}
-                    </ul>
+                  <Reveal delay={(index % 2) * 0.12} className="h-full">
+                    <TiltCard className="glow-card relative h-full overflow-hidden rounded-3xl p-7">
+                      <LineIcon
+                        path={iconPath(page.icon)}
+                        className="icon-draw pointer-events-none absolute -right-6 -top-6 h-44 w-44 text-line transition duration-700 [transform:translateZ(30px)] group-hover:-rotate-6 group-hover:scale-125 group-hover:text-accent-2"
+                      />
+                      <p className="relative inline-block origin-left font-display text-2xl text-accent transition duration-500 [transform:translateZ(40px)] group-hover:scale-150 group-hover:text-accent-2">
+                        {String(index + 1).padStart(2, "0")}
+                      </p>
+                      <h3 className="relative mt-9 font-display text-4xl leading-tight transition duration-500 [transform:translateZ(50px)] group-hover:translate-x-2 group-hover:text-accent-2">
+                        {page.title}
+                      </h3>
+                      <p className="relative mt-3 max-w-sm text-sm text-muted transition duration-500 [transform:translateZ(30px)] group-hover:text-foreground sm:text-base">
+                        {page.text}
+                      </p>
+                      <ul className="relative mt-6 flex flex-wrap gap-2 [transform:translateZ(40px)]">
+                        {page.tags.map((tag, tagIndex) => (
+                          <li
+                            key={tag}
+                            style={{ transitionDelay: `${tagIndex * 70}ms` }}
+                            className="rounded-full border border-line px-3 py-1 text-xs text-muted transition duration-300 group-hover:-translate-y-1 group-hover:border-accent group-hover:bg-accent-soft group-hover:text-accent-2"
+                          >
+                            {tag}
+                          </li>
+                        ))}
+                      </ul>
+                      <a
+                        href="#check"
+                        aria-label={`Try it: ${page.title}`}
+                        className="absolute bottom-6 right-6 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full bg-gradient-to-r from-accent to-accent-2 text-lg text-accent-ink opacity-0 transition duration-500 group-hover:translate-x-0 group-hover:opacity-100 focus-visible:translate-x-0 focus-visible:opacity-100"
+                      >
+                        ↗
+                      </a>
+                    </TiltCard>
                   </Reveal>
                 </li>
               ))}
