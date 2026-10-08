@@ -40,13 +40,17 @@ export async function POST(request: Request) {
   }
 
   try {
+    const [bytes, weather] = await Promise.all([
+      file.arrayBuffer(),
+      city ? getWeather(city) : null,
+    ]);
     const check = await checkOutfit({
-      image: Buffer.from(await file.arrayBuffer()),
+      image: Buffer.from(bytes),
       mediaType: file.type as ImageMediaType,
       event,
       details,
       styleFor,
-      weather: city ? await getWeather(city) : null,
+      weather,
       closet: CLOSET_ENABLED ? listItems().filter((item) => item.tagged) : [],
     });
     return Response.json({ check });

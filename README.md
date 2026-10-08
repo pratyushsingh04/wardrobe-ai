@@ -28,7 +28,7 @@ Requires Node 22.5 or newer (the app uses the built-in `node:sqlite` module).
 | AI tagging (Claude vision + structured output) | `lib/tagger.ts` |
 | Outfit suggestion (Claude, with a tag-matching fallback) | `lib/outfit.ts`, `app/api/outfit/route.ts` |
 | Live weather (Open-Meteo, no key needed) | `lib/weather.ts` |
-| AI provider layer (Gemini with model fallback, or Claude) | `lib/ai.ts` |
+| AI provider layer (Gemini with hedged model fallback, or Claude) | `lib/ai.ts` |
 | SQLite storage | `lib/db.ts` |
 
 Photos and the database live in `data/`, which is git-ignored.

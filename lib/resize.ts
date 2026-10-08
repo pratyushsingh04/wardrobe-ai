@@ -1,4 +1,4 @@
-const MAX_SIDE = 1600;
+const MAX_SIDE = 1152;
 
 // Phone photos are often 5-10 MB; shrink them in the browser so uploads are fast
 // and stay under the API's 5 MB image limit.
