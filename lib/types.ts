@@ -102,7 +102,15 @@ export type OutfitCheck = {
   idealOutfit: string;
   // Pieces that make up the ideal outfit, each with store search links.
   shop: ShopPiece[];
-  hair: { style: string; how: string };
-  grooming: string[];
+  // The first hairstyle is the top pick; the rest are alternatives.
+  hairstyles: { name: string; why: string; how: string }[];
+  hairProducts: ShopPiece[];
+  makeup: {
+    // "Makeup" or "Grooming", depending on who the look is for.
+    kind: "Makeup" | "Grooming";
+    title: string;
+    steps: { area: string; tip: string }[];
+    products: ShopPiece[];
+  };
   weather: Weather | null;
 };

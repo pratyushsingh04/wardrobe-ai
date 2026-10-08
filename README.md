@@ -1,6 +1,6 @@
 # Wardrobe AI
 
-Upload a photo of what you plan to wear, pick an event, and get a three-page lookbook: a suitability score out of 100 with what works and what to fix, the pieces to wear instead with search links to Myntra, Amazon, Flipkart and Ajio, and hair and grooming tips. Locally you can also build a closet of AI-tagged clothes and get outfit suggestions from it.
+Upload a photo of what you plan to wear, pick an event, and get a four-page lookbook: a suitability score out of 100 with what works and what to fix, the pieces to wear instead with search links to Myntra, Amazon, Flipkart and Ajio, three hairstyle options, and a step-by-step makeup or grooming look with product links to Nykaa, Amazon, Purplle and Myntra. Locally you can also build a closet of AI-tagged clothes and get outfit suggestions from it.
 
 ## Run it
 

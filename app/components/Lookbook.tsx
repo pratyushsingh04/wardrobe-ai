@@ -2,11 +2,11 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { SCORE_PARTS, type OutfitCheck } from "@/lib/types";
+import { SCORE_PARTS, type OutfitCheck, type ShopPiece } from "@/lib/types";
 import { CountUp, EASE } from "./motion";
 import { ghostButton, label } from "./ui";
 
-const PAGES = ["The verdict", "Shop the look", "Hair & grooming"];
+const PAGES = ["The verdict", "Shop the look", "Hair", "Makeup & grooming"];
 const RING_RADIUS = 54;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
@@ -134,85 +134,151 @@ function VerdictPage({ check, event }: { check: OutfitCheck; event: string }) {
   );
 }
 
+function ProductGrid({ products }: { products: ShopPiece[] }) {
+  return (
+    <ul className="grid gap-4 sm:grid-cols-2">
+      {products.map((piece, index) => (
+        <motion.li
+          key={piece.name}
+          className="glow-card flex flex-col gap-3 rounded-2xl p-4"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: EASE, delay: 0.3 + index * 0.08 }}
+        >
+          <div className="flex items-start gap-3">
+            <span className="font-display text-3xl leading-none text-accent">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <div>
+              <h4 className="font-semibold leading-snug">{piece.name}</h4>
+              <p className="mt-1 text-sm text-muted">{piece.reason}</p>
+            </div>
+          </div>
+          <div className="mt-auto flex flex-wrap gap-2">
+            {piece.links.map((link) => (
+              <a
+                key={link.store}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-line px-3 py-1 text-xs font-medium transition duration-300 hover:border-accent hover:bg-accent hover:text-accent-ink"
+              >
+                {link.store} ↗
+              </a>
+            ))}
+          </div>
+        </motion.li>
+      ))}
+    </ul>
+  );
+}
+
+const SEARCH_NOTE = "Each button opens that store's search results. Prices and stock are on the store.";
+
 function ShopPage({ check }: { check: OutfitCheck }) {
   return (
     <>
       <p className={label}>Wear this instead</p>
       <p className="mt-2 font-display text-3xl leading-tight sm:text-4xl">{check.idealOutfit}</p>
-
-      <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-        {check.shop.map((piece, index) => (
-          <motion.li
-            key={piece.name}
-            className="glow-card flex flex-col gap-3 rounded-2xl p-4"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: EASE, delay: 0.3 + index * 0.08 }}
-          >
-            <div className="flex items-start gap-3">
-              <span className="font-display text-3xl leading-none text-accent">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <div>
-                <h4 className="font-semibold leading-snug">{piece.name}</h4>
-                <p className="mt-1 text-sm text-muted">{piece.reason}</p>
-              </div>
-            </div>
-            <div className="mt-auto flex flex-wrap gap-2">
-              {piece.links.map((link) => (
-                <a
-                  key={link.store}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full border border-line px-3 py-1 text-xs font-medium transition duration-300 hover:border-accent hover:bg-accent hover:text-accent-ink"
-                >
-                  {link.store} ↗
-                </a>
-              ))}
-            </div>
-          </motion.li>
-        ))}
-      </ul>
-      <p className="mt-4 text-xs text-muted">
-        Each button opens that store&apos;s search results for the piece. Prices and stock are on the
-        store.
-      </p>
+      <div className="mt-6">
+        <ProductGrid products={check.shop} />
+      </div>
+      <p className="mt-4 text-xs text-muted">{SEARCH_NOTE}</p>
     </>
   );
 }
 
-function GroomingPage({ check }: { check: OutfitCheck }) {
+function HairPage({ check }: { check: OutfitCheck }) {
+  const [topPick, ...others] = check.hairstyles;
+  if (!topPick) return <p className="text-sm text-muted">No hairstyle ideas came back for this one.</p>;
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-2xl bg-accent-soft p-6">
-        <p className={label}>Hair</p>
-        <p className="mt-2 font-display text-4xl leading-tight text-gradient sm:text-5xl">
-          {check.hair.style}
-        </p>
-        <p className="mt-4 text-sm sm:text-base">{check.hair.how}</p>
+    <>
+      <div className="grid gap-5 lg:grid-cols-[1.15fr_1fr]">
+        <div className="rounded-2xl bg-accent-soft p-6">
+          <p className={label}>Top pick</p>
+          <p className="mt-2 font-display text-4xl leading-tight text-gradient sm:text-5xl">
+            {topPick.name}
+          </p>
+          <p className="mt-4 text-sm sm:text-base">{topPick.why}</p>
+          <p className={`${label} mt-5`}>How to get it</p>
+          <p className="mt-1.5 text-sm sm:text-base">{topPick.how}</p>
+        </div>
+        {others.length > 0 && (
+          <div>
+            <p className={label}>Also works</p>
+            <ul className="mt-3 space-y-4">
+              {others.map((style, index) => (
+                <motion.li
+                  key={style.name}
+                  className="border-b border-line pb-4"
+                  initial={{ opacity: 0, x: 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, ease: EASE, delay: 0.3 + index * 0.1 }}
+                >
+                  <p className="font-display text-2xl leading-tight">{style.name}</p>
+                  <p className="mt-1 text-sm text-muted">{style.why}</p>
+                  <p className="mt-1.5 text-sm">{style.how}</p>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
-      <div>
-        <p className={label}>Grooming &amp; makeup</p>
-        <ol className="mt-3 space-y-3">
-          {check.grooming.map((tip, index) => (
-            <motion.li
-              key={tip}
-              className="flex gap-4 border-b border-line pb-3 text-sm sm:text-base"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, ease: EASE, delay: 0.3 + index * 0.09 }}
-            >
-              <span className="font-display text-2xl leading-none text-accent">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              {tip}
-            </motion.li>
-          ))}
-        </ol>
-        <p className="mt-4 text-xs text-muted">Styling ideas for the event, yours to take or leave.</p>
-      </div>
-    </div>
+
+      {check.hairProducts.length > 0 && (
+        <>
+          <p className={`${label} mt-7`}>What you need for it</p>
+          <div className="mt-3">
+            <ProductGrid products={check.hairProducts} />
+          </div>
+          <p className="mt-4 text-xs text-muted">{SEARCH_NOTE}</p>
+        </>
+      )}
+    </>
+  );
+}
+
+function MakeupPage({ check }: { check: OutfitCheck }) {
+  const { makeup } = check;
+  return (
+    <>
+      <p className={label}>The {makeup.kind.toLowerCase()} look</p>
+      <p className="mt-2 font-display text-4xl leading-tight text-gradient sm:text-5xl">
+        {makeup.title}
+      </p>
+
+      <ol className="mt-6 grid gap-x-8 sm:grid-cols-2">
+        {makeup.steps.map((step, index) => (
+          <motion.li
+            key={step.area + step.tip}
+            className="flex gap-4 border-b border-line py-3.5"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASE, delay: 0.3 + index * 0.08 }}
+          >
+            <span className="font-display text-3xl leading-none text-accent">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <div>
+              <p className={label}>{step.area}</p>
+              <p className="mt-1 text-sm sm:text-base">{step.tip}</p>
+            </div>
+          </motion.li>
+        ))}
+      </ol>
+
+      {makeup.products.length > 0 && (
+        <>
+          <p className={`${label} mt-7`}>Products for this look</p>
+          <div className="mt-3">
+            <ProductGrid products={makeup.products} />
+          </div>
+          <p className="mt-4 text-xs text-muted">
+            {SEARCH_NOTE} Styling ideas for the event, yours to take or leave.
+          </p>
+        </>
+      )}
+    </>
   );
 }
 
@@ -272,7 +338,8 @@ export default function Lookbook({ check, event }: { check: OutfitCheck; event: 
           >
             {page === 0 && <VerdictPage check={check} event={event} />}
             {page === 1 && <ShopPage check={check} />}
-            {page === 2 && <GroomingPage check={check} />}
+            {page === 2 && <HairPage check={check} />}
+            {page === 3 && <MakeupPage check={check} />}
           </motion.div>
         </AnimatePresence>
       </div>

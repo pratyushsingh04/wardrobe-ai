@@ -15,7 +15,7 @@ const STEPS = [
   { title: "Snap it", text: "Upload a photo of the outfit, worn or laid out on the bed." },
   { title: "Pick the event", text: "Wedding, interview, date, college. Add your city for live weather." },
   { title: "Get the verdict", text: "A score out of 100 with exactly what works and what doesn't." },
-  { title: "Turn the page", text: "What to buy instead with store links, then hair and grooming." },
+  { title: "Turn the page", text: "What to buy instead, hairstyles, and a makeup or grooming look, all with store links." },
 ];
 
 const HEADLINE = [
@@ -208,7 +208,7 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
               transition={{ duration: 0.9, ease: EASE, delay: INTRO_SECONDS + 0.7 }}
             >
               Upload what you plan to wear. Get a score out of 100, what to buy instead, and the
-              hair and grooming to match.
+              hair and makeup to match.
             </motion.p>
 
             <motion.div
@@ -248,8 +248,8 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
           <section id="check" className="pt-24">
             <Reveal>
               <SectionHeading eyebrow="The check" title="Show us the fit.">
-                One photo, one event. The lookbook that comes back has three pages: the verdict,
-                what to wear instead, and hair and grooming.
+                One photo, one event. The lookbook that comes back has four pages: the verdict,
+                what to wear instead, hair, and makeup or grooming.
               </SectionHeading>
             </Reveal>
             <Reveal delay={0.15} className="mt-8">

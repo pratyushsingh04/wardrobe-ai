@@ -16,7 +16,8 @@ const LOADING_LINES = [
   "Checking the weather…",
   "Matching the dress code…",
   "Picking better pieces…",
-  "Styling hair and grooming…",
+  "Styling your hair…",
+  "Building the makeup look…",
 ];
 
 export default function OutfitCheck() {
@@ -201,7 +202,7 @@ export default function OutfitCheck() {
             <p className="text-xs text-muted">
               {loading
                 ? "This can take up to half a minute."
-                : "Score, what to buy instead, hair and grooming."}
+                : "Score, what to buy instead, hair and makeup."}
             </p>
           </div>
           {error && (

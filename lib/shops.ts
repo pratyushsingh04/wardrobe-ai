@@ -14,3 +14,18 @@ export function shopLinks(query: string): ShopLink[] {
     { store: "Ajio", url: `https://www.ajio.com/search/?text=${encoded}` },
   ];
 }
+
+// Same idea for hair, makeup and grooming products.
+export function beautyLinks(query: string): ShopLink[] {
+  const q = query.trim();
+  const encoded = encodeURIComponent(q);
+  return [
+    { store: "Nykaa", url: `https://www.nykaa.com/search/result/?q=${encoded}` },
+    { store: "Amazon", url: `https://www.amazon.in/s?k=${encoded}` },
+    { store: "Purplle", url: `https://www.purplle.com/search?q=${encoded}` },
+    {
+      store: "Myntra",
+      url: `https://www.myntra.com/${encodeURIComponent(q.toLowerCase().replace(/\s+/g, "-"))}`,
+    },
+  ];
+}
