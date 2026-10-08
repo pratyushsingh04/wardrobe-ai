@@ -7,6 +7,7 @@ import { resizePhoto } from "@/lib/resize";
 import { CATEGORIES, EVENTS, type Category, type Item, type ItemTags } from "@/lib/types";
 import Cursor from "./Cursor";
 import EditItemDialog from "./EditItemDialog";
+import FooterWordmark from "./FooterWordmark";
 import { LineIcon, STYLE_ICONS } from "./icons";
 import { CountUp, EASE, INTRO_SECONDS, Reveal, usePointerGlow, WordReveal } from "./motion";
 import OutfitCheck from "./OutfitCheck";
@@ -531,12 +532,7 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
             </Reveal>
             <p className="mt-10 text-xs text-muted">Scores judge the clothes, never the person.</p>
           </div>
-          <p
-            aria-hidden="true"
-            className="-mb-[0.22em] mt-4 select-none whitespace-nowrap text-center font-display text-[clamp(4rem,21vw,20rem)] leading-none text-gradient opacity-90"
-          >
-            Wardrobe AI
-          </p>
+          <FooterWordmark />
         </footer>
       </main>
 

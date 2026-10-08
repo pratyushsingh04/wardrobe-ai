@@ -98,6 +98,18 @@ body::after {
   }
 }
 
+/* Footer wordmark letters: --pull (0 to 1) is set from script as the pointer passes. */
+.wordmark-letter {
+  transform: translateY(calc(var(--pull, 0) * -0.16em)) scale(calc(1 + var(--pull, 0) * 0.1))
+    rotate(calc(var(--pull, 0) * -3deg));
+  filter: brightness(calc(1 + var(--pull, 0) * 0.45))
+    drop-shadow(0 0.06em 0.18em color-mix(in srgb, var(--accent) calc(var(--pull, 0) * 70%), transparent));
+  transition:
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.45s ease-out;
+  will-change: transform;
+}
+
 @keyframes sheen {
   to {
     background-position: -200% center;
@@ -216,6 +228,11 @@ body::after {
   .animate-grow,
   .animate-scan,
   .animate-marquee,
+  .wordmark-letter {
+    transform: none;
+    transition: none;
+  }
+
   .animate-drift,
   .animate-float,
   .text-gradient {
