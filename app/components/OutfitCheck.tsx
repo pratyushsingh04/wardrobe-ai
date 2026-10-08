@@ -10,7 +10,7 @@ import { card, Chip, field, label, primaryButton } from "./ui";
 
 const CITY_KEY = "wardrobe-city";
 
-// Shown one after another while the AI works, since a check can take half a minute.
+// Shown one after another while the AI works, so the wait feels alive.
 const LOADING_LINES = [
   "Reading the fabrics…",
   "Checking the weather…",
@@ -47,7 +47,7 @@ export default function OutfitCheck() {
     if (!loading) return;
     const timer = setInterval(
       () => setLoadingLine((line) => (line + 1) % LOADING_LINES.length),
-      2600,
+      1500,
     );
     return () => clearInterval(timer);
   }, [loading]);
@@ -201,7 +201,7 @@ export default function OutfitCheck() {
             </button>
             <p className="text-xs text-muted">
               {loading
-                ? "This can take up to half a minute."
+                ? "Usually under ten seconds."
                 : "Score, what to buy instead, hair and makeup."}
             </p>
           </div>
