@@ -5,10 +5,13 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { resizePhoto } from "@/lib/resize";
 import { CATEGORIES, EVENTS, type Category, type Item, type ItemTags } from "@/lib/types";
+import Cursor from "./Cursor";
 import EditItemDialog from "./EditItemDialog";
-import { EASE, INTRO_SECONDS, Reveal, usePointerGlow, WordReveal } from "./motion";
+import { LineIcon, STYLE_ICONS } from "./icons";
+import { CountUp, EASE, INTRO_SECONDS, Reveal, usePointerGlow, WordReveal } from "./motion";
 import OutfitCheck from "./OutfitCheck";
 import OutfitPanel from "./OutfitPanel";
+import Preloader from "./Preloader";
 import { Chip, ghostButton, label, primaryButton, SectionHeading } from "./ui";
 
 const STEPS = [
@@ -27,6 +30,52 @@ const HEADLINE = [
   { text: "the" },
   { text: "event?" },
 ];
+
+const STATS = [
+  { value: 100, label: "point score" },
+  { value: 4, label: "lookbook pages" },
+  { value: 6, label: "stores linked" },
+  { value: EVENTS.length, label: "kinds of event" },
+];
+
+const LOOKBOOK = [
+  {
+    icon: "Hangers",
+    title: "The verdict",
+    text: "A score out of 100, split into formality, colours, weather and setting, with what to fix first.",
+    tags: ["Formality", "Colours", "Weather", "Setting"],
+  },
+  {
+    icon: "Shirts",
+    title: "Shop the look",
+    text: "Three to five pieces to wear instead. One tap opens each on the store you like.",
+    tags: ["Myntra", "Amazon", "Flipkart", "Ajio"],
+  },
+  {
+    icon: "Hair",
+    title: "Hair",
+    text: "Three hairstyles that suit the outfit and the event, how to get each, and what you need.",
+    tags: ["Top pick", "Alternatives", "Products"],
+  },
+  {
+    icon: "Makeup",
+    title: "Makeup & grooming",
+    text: "A step-by-step look, from skin prep to the finishing touch, with the products for it.",
+    tags: ["Nykaa", "Purplle", "Amazon", "Myntra"],
+  },
+];
+
+// Decorative samples of what a lookbook contains, floating around the headline on wide screens.
+const FLOATERS = [
+  { eyebrow: "The verdict", text: "92% · Great choice", position: "left-[4%] top-[24%]", tilt: "-5deg", delay: 0 },
+  { eyebrow: "Shop the look", text: "Navy bandhgala jacket ↗", position: "right-[4%] top-[20%]", tilt: "4deg", delay: 1.6 },
+  { eyebrow: "Hair", text: "Textured side-part quiff", position: "left-[7%] bottom-[16%]", tilt: "3deg", delay: 3.1 },
+  { eyebrow: "Makeup", text: "Gold lid, classic red lip", position: "right-[6%] bottom-[20%]", tilt: "-4deg", delay: 4.4 },
+];
+
+function iconPath(name: string) {
+  return STYLE_ICONS.find((item) => item.label === name)!.path;
+}
 
 function Marquee() {
   const words = [...EVENTS, ...EVENTS];
@@ -133,17 +182,8 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
 
   return (
     <>
-      {/* Intro curtain: pure CSS, so it lifts even before scripts load. */}
-      <div
-        aria-hidden="true"
-        className="animate-curtain fixed inset-0 z-50 flex items-center justify-center bg-background"
-      >
-        <p className="overflow-hidden font-display text-6xl sm:text-8xl">
-          <span className="animate-curtain-word inline-block">
-            Wardrobe <span className="italic text-gradient">AI</span>
-          </span>
-        </p>
-      </div>
+      <Preloader />
+      <Cursor />
 
       <header className="fixed inset-x-0 top-0 z-30 border-b border-line/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
@@ -183,7 +223,29 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
             <div className="absolute inset-0 bg-[linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] bg-[size:72px_72px] opacity-25 [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
           </div>
 
-          <motion.div style={{ y: heroShift, opacity: heroFade }} className="flex flex-col items-center">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden xl:block">
+            {FLOATERS.map((floater, index) => (
+              <motion.div
+                key={floater.eyebrow}
+                className={`absolute ${floater.position}`}
+                initial={{ opacity: 0, scale: 0.85, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 1, ease: EASE, delay: INTRO_SECONDS + 0.9 + index * 0.15 }}
+              >
+                <div
+                  className="glass animate-float rounded-2xl px-4 py-3 text-left"
+                  style={
+                    { "--tilt": floater.tilt, animationDelay: `-${floater.delay}s` } as React.CSSProperties
+                  }
+                >
+                  <p className={label}>{floater.eyebrow}</p>
+                  <p className="mt-1 font-display text-xl leading-tight">{floater.text}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div style={{ y: heroShift, opacity: heroFade }} className="relative flex flex-col items-center">
             <motion.p
               className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-4 py-1.5 text-xs font-medium text-muted backdrop-blur"
               initial={{ opacity: 0, y: 16 }}
@@ -244,6 +306,23 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
 
         <Marquee />
 
+        <section aria-label="At a glance" className="border-b border-line">
+          <dl className="mx-auto grid w-full max-w-6xl grid-cols-2 px-4 sm:px-6 lg:grid-cols-4">
+            {STATS.map((stat, index) => (
+              <Reveal
+                key={stat.label}
+                delay={index * 0.08}
+                className="border-line py-9 text-center lg:border-l lg:first:border-l-0"
+              >
+                <dd className="font-display text-6xl leading-none text-gradient sm:text-7xl">
+                  <CountUp value={stat.value} />
+                </dd>
+                <dt className={`${label} mt-3`}>{stat.label}</dt>
+              </Reveal>
+            ))}
+          </dl>
+        </section>
+
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <section id="check" className="pt-24">
             <Reveal>
@@ -255,6 +334,41 @@ export default function Closet({ closetEnabled }: { closetEnabled: boolean }) {
             <Reveal delay={0.15} className="mt-8">
               <OutfitCheck />
             </Reveal>
+          </section>
+
+          <section id="lookbook" className="pt-28">
+            <Reveal>
+              <SectionHeading eyebrow="Inside the lookbook" title="Four pages, head to toe.">
+                Every check comes back as a lookbook you flip through, not a single number.
+              </SectionHeading>
+            </Reveal>
+            <ul className="mt-10 grid gap-4 md:grid-cols-2">
+              {LOOKBOOK.map((page, index) => (
+                <li key={page.title}>
+                  <Reveal
+                    delay={(index % 2) * 0.12}
+                    className="glow-card group relative h-full overflow-hidden rounded-3xl p-7 hover:-translate-y-1.5"
+                  >
+                    <LineIcon
+                      path={iconPath(page.icon)}
+                      className="pointer-events-none absolute -right-6 -top-6 h-44 w-44 text-line transition duration-700 group-hover:rotate-6 group-hover:scale-110 group-hover:text-accent/50"
+                    />
+                    <p className="relative font-display text-2xl text-accent">
+                      {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <h3 className="relative mt-10 font-display text-4xl leading-tight">{page.title}</h3>
+                    <p className="relative mt-3 max-w-sm text-sm text-muted sm:text-base">{page.text}</p>
+                    <ul className="relative mt-6 flex flex-wrap gap-2">
+                      {page.tags.map((tag) => (
+                        <li key={tag} className="rounded-full border border-line px-3 py-1 text-xs text-muted">
+                          {tag}
+                        </li>
+                      ))}
+                    </ul>
+                  </Reveal>
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section id="how" className="pt-28">

@@ -155,16 +155,13 @@ body::after {
   }
 }
 
-@keyframes curtain-word {
-  0% {
-    transform: translateY(110%);
-  }
-  35%,
-  75% {
-    transform: translateY(0);
-  }
+@keyframes float {
+  0%,
   100% {
-    transform: translateY(-110%);
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-14px) rotate(var(--tilt, 0deg));
   }
 }
 
@@ -192,12 +189,21 @@ body::after {
   animation: drift 16s ease-in-out infinite;
 }
 
-@utility animate-curtain {
-  animation: curtain 0.9s cubic-bezier(0.76, 0, 0.24, 1) 1.25s both;
+/* Safety net for the preloader: lifts it even if scripts never run. */
+@utility animate-failsafe {
+  animation: curtain 0.6s ease 7s both;
 }
 
-@utility animate-curtain-word {
-  animation: curtain-word 1.5s cubic-bezier(0.76, 0, 0.24, 1) both;
+@utility animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+/* Frosted glass for the floating hero cards. */
+@utility glass {
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 30px 60px -30px black;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -211,13 +217,12 @@ body::after {
   .animate-scan,
   .animate-marquee,
   .animate-drift,
+  .animate-float,
   .text-gradient {
     animation: none;
   }
 
-  .animate-curtain,
-  .animate-curtain-word {
-    animation-duration: 0.01s;
-    animation-delay: 0s;
+  .animate-failsafe {
+    animation-delay: 1s;
   }
 }

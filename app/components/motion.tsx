@@ -5,8 +5,12 @@ import { useEffect, useRef } from "react";
 
 export const EASE = [0.2, 0.8, 0.2, 1] as const;
 
-// The intro curtain covers the page for this long, so above-the-fold animation waits for it.
-export const INTRO_SECONDS = 1.7;
+// Preloader timing: the wardrobe loads, the wordmark holds, then the panel lifts.
+export const LOADER_LOAD_MS = 2400;
+export const LOADER_BRAND_MS = 950;
+
+// Above-the-fold animation waits until the preloader has started lifting.
+export const INTRO_SECONDS = (LOADER_LOAD_MS + LOADER_BRAND_MS + 450) / 1000;
 
 type RevealProps = {
   children: React.ReactNode;
