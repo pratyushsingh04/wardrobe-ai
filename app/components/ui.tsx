@@ -1,16 +1,15 @@
 export const primaryButton =
-  "inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-ink shadow-[0_10px_24px_-12px_var(--accent)] transition hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0";
+  "group/button relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent to-accent-2 px-7 py-3.5 text-sm font-semibold text-accent-ink shadow-[0_14px_40px_-14px_var(--accent)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_-12px_var(--accent)] active:translate-y-0 disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0";
 
 export const ghostButton =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 py-2.5 text-sm font-medium transition hover:border-foreground/40";
+  "inline-flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 py-2.5 text-sm font-medium transition duration-300 hover:border-accent hover:text-accent";
 
 export const field =
-  "w-full rounded-xl border border-line bg-background px-3.5 py-2.5 text-sm transition placeholder:text-muted/70 focus:border-accent focus:outline-none";
+  "w-full rounded-xl border border-line bg-background/60 px-3.5 py-2.5 text-sm transition placeholder:text-muted/60 focus:border-accent focus:outline-none";
 
-export const label = "text-xs font-semibold uppercase tracking-[0.12em] text-muted";
+export const label = "text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-muted";
 
-export const card =
-  "rounded-[28px] border border-line bg-surface shadow-[0_24px_60px_-40px_rgba(60,30,10,0.45)]";
+export const card = "glow-card rounded-[28px]";
 
 type ChipProps = {
   active: boolean;
@@ -24,10 +23,10 @@ export function Chip({ active, onClick, children }: ChipProps) {
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`rounded-full border px-3.5 py-1.5 text-sm transition first-letter:uppercase ${
+      className={`rounded-full border px-3.5 py-1.5 text-sm transition duration-300 first-letter:uppercase ${
         active
-          ? "border-foreground bg-foreground text-background"
-          : "border-line bg-surface hover:border-foreground/40"
+          ? "border-accent bg-accent text-accent-ink shadow-[0_8px_24px_-10px_var(--accent)]"
+          : "border-line bg-surface hover:border-accent/60"
       }`}
     >
       {children}
@@ -46,9 +45,12 @@ export function SectionHeading({
 }) {
   return (
     <div>
-      <p className={label}>{eyebrow}</p>
-      <h2 className="mt-1 font-display text-3xl leading-tight sm:text-4xl">{title}</h2>
-      {children && <p className="mt-2 max-w-xl text-sm text-muted">{children}</p>}
+      <p className={`${label} flex items-center gap-3`}>
+        <span className="h-px w-8 bg-accent" />
+        {eyebrow}
+      </p>
+      <h2 className="mt-3 font-display text-4xl leading-[1.05] sm:text-6xl">{title}</h2>
+      {children && <p className="mt-3 max-w-xl text-sm text-muted sm:text-base">{children}</p>}
     </div>
   );
 }

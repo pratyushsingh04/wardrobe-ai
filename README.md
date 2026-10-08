@@ -1,6 +1,6 @@
 # Wardrobe AI
 
-Upload a photo of what you plan to wear, pick an event, and get a suitability score out of 100 with what works, what to fix and what would be ideal. You can also build a closet of AI-tagged clothes and get outfit suggestions from it.
+Upload a photo of what you plan to wear, pick an event, and get a three-page lookbook: a suitability score out of 100 with what works and what to fix, the pieces to wear instead with search links to Myntra, Amazon, Flipkart and Ajio, and hair and grooming tips. Locally you can also build a closet of AI-tagged clothes and get outfit suggestions from it.
 
 ## Run it
 
@@ -23,6 +23,8 @@ Requires Node 22.5 or newer (the app uses the built-in `node:sqlite` module).
 | Edit + delete API | `app/api/items/[id]/route.ts` |
 | Image serving | `app/api/images/[file]/route.ts` |
 | Outfit check and scoring (Claude vision) | `lib/checker.ts`, `app/api/check/route.ts` |
+| Store search links | `lib/shops.ts` |
+| Lookbook with page-flip, animation helpers | `app/components/Lookbook.tsx`, `app/components/motion.tsx` |
 | AI tagging (Claude vision + structured output) | `lib/tagger.ts` |
 | Outfit suggestion (Claude, with a tag-matching fallback) | `lib/outfit.ts`, `app/api/outfit/route.ts` |
 | Live weather (Open-Meteo, no key needed) | `lib/weather.ts` |

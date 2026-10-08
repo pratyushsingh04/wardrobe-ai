@@ -1,85 +1,34 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { resizePhoto } from "@/lib/resize";
-import { EVENTS, SCORE_PARTS, type OutfitCheck as Check } from "@/lib/types";
+import { EVENTS, STYLE_FOR, type OutfitCheck as Check, type StyleFor } from "@/lib/types";
+import Lookbook from "./Lookbook";
+import { EASE } from "./motion";
 import { card, Chip, field, label, primaryButton } from "./ui";
 
 const CITY_KEY = "wardrobe-city";
-const RING_RADIUS = 54;
-const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
-function toneFor(score: number) {
-  if (score >= 80) return { text: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500" };
-  if (score >= 60) return { text: "text-lime-600 dark:text-lime-400", bar: "bg-lime-500" };
-  if (score >= 40) return { text: "text-amber-600 dark:text-amber-400", bar: "bg-amber-500" };
-  return { text: "text-red-600 dark:text-red-400", bar: "bg-red-500" };
-}
-
-function ScoreRing({ score }: { score: number }) {
-  return (
-    <div className={`relative h-36 w-36 shrink-0 ${toneFor(score).text}`}>
-      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
-        <circle cx="60" cy="60" r={RING_RADIUS} fill="none" strokeWidth="9" className="stroke-line" />
-        <circle
-          cx="60"
-          cy="60"
-          r={RING_RADIUS}
-          fill="none"
-          strokeWidth="9"
-          strokeLinecap="round"
-          stroke="currentColor"
-          strokeDasharray={RING_LENGTH}
-          strokeDashoffset={RING_LENGTH * (1 - score / 100)}
-          style={{ "--ring-full": RING_LENGTH } as React.CSSProperties}
-          className="animate-ring"
-        />
-      </svg>
-      <p className="absolute inset-0 flex items-center justify-center font-display text-5xl tabular-nums">
-        {score}
-        <span className="mt-2 text-xl">%</span>
-      </p>
-    </div>
-  );
-}
-
-type AdviceProps = {
-  title: string;
-  lines: string[];
-  mark: string;
-  markClass: string;
-};
-
-function Advice({ title, lines, mark, markClass }: AdviceProps) {
-  if (lines.length === 0) return null;
-  return (
-    <div className="rounded-2xl border border-line bg-background p-4">
-      <h3 className={label}>{title}</h3>
-      <ul className="mt-3 space-y-2.5 text-sm">
-        {lines.map((line) => (
-          <li key={line} className="flex gap-2.5">
-            <span
-              aria-hidden="true"
-              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${markClass}`}
-            >
-              {mark}
-            </span>
-            {line}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+// Shown one after another while the AI works, since a check can take half a minute.
+const LOADING_LINES = [
+  "Reading the fabrics…",
+  "Checking the weather…",
+  "Matching the dress code…",
+  "Picking better pieces…",
+  "Styling hair and grooming…",
+];
 
 export default function OutfitCheck() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [event, setEvent] = useState<string>(EVENTS[0]);
   const [checkedEvent, setCheckedEvent] = useState<string>(EVENTS[0]);
+  const [styleFor, setStyleFor] = useState<StyleFor>("Auto");
   const [details, setDetails] = useState("");
   const [check, setCheck] = useState<Check | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingLine, setLoadingLine] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const cityInput = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -94,7 +43,16 @@ export default function OutfitCheck() {
   }, []);
 
   useEffect(() => {
-    if (check) resultRef.current?.scrollIntoView({ block: "nearest" });
+    if (!loading) return;
+    const timer = setInterval(
+      () => setLoadingLine((line) => (line + 1) % LOADING_LINES.length),
+      2600,
+    );
+    return () => clearInterval(timer);
+  }, [loading]);
+
+  useEffect(() => {
+    if (check) resultRef.current?.scrollIntoView({ block: "start" });
   }, [check]);
 
   function choosePhoto(file: File | undefined) {
@@ -117,6 +75,7 @@ export default function OutfitCheck() {
       localStorage.setItem(CITY_KEY, city);
     } catch {}
 
+    setLoadingLine(0);
     setLoading(true);
     setError(null);
     try {
@@ -125,6 +84,7 @@ export default function OutfitCheck() {
       body.append("event", event);
       body.append("details", details);
       body.append("city", city);
+      body.append("styleFor", styleFor);
       const res = await fetch("/api/check", { method: "POST", body });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -138,33 +98,49 @@ export default function OutfitCheck() {
   }
 
   return (
-    <div className={`${card} p-4 sm:p-6`}>
-      <form onSubmit={submit} className="flex flex-col gap-6 md:flex-row">
-        <label className="group relative flex aspect-[3/4] w-full max-w-xs shrink-0 cursor-pointer self-center flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl border-2 border-dashed border-line bg-background text-center transition hover:border-accent md:w-64">
+    <div className={`${card} p-4 sm:p-7`}>
+      <form onSubmit={submit} className="flex flex-col gap-7 md:flex-row">
+        <label className="group relative flex aspect-[3/4] w-full max-w-xs shrink-0 cursor-pointer flex-col items-center justify-center gap-3 self-center overflow-hidden rounded-3xl border border-dashed border-line bg-background/60 text-center transition duration-500 hover:border-accent md:w-72 md:self-auto">
           {preview ? (
             <>
               {/* A local blob preview; next/image adds nothing here. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Outfit to check" className="h-full w-full object-cover" />
-              <span className="absolute bottom-3 rounded-full bg-black/65 px-3 py-1 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
+              <img
+                src={preview}
+                alt="Outfit to check"
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+              <span className="absolute bottom-3 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
                 Change photo
               </span>
             </>
           ) : (
             <>
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent">
-                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-accent transition duration-500 group-hover:scale-110 group-hover:bg-accent group-hover:text-accent-ink">
+                <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
                   <circle cx="12" cy="13" r="3.5" />
                 </svg>
               </span>
-              <span className="px-6 text-sm font-medium">Add a photo of your outfit</span>
+              <span className="px-6 font-display text-2xl">Drop your outfit here</span>
               <span className="px-6 text-xs text-muted">Worn or laid out, full outfit in frame</span>
             </>
           )}
           {loading && (
-            <span className="absolute inset-0 overflow-hidden bg-black/35">
-              <span className="animate-scan absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-transparent via-white/45 to-transparent" />
+            <span className="absolute inset-0 flex items-end overflow-hidden bg-black/55 p-4">
+              <span className="animate-scan absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-transparent via-accent/60 to-transparent" />
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={loadingLine}
+                  className="relative text-sm font-medium text-white"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.35, ease: EASE }}
+                >
+                  {LOADING_LINES[loadingLine]}
+                </motion.span>
+              </AnimatePresence>
             </span>
           )}
           <input
@@ -175,12 +151,23 @@ export default function OutfitCheck() {
           />
         </label>
 
-        <div className="flex flex-1 flex-col gap-5">
+        <div className="flex flex-1 flex-col gap-6">
           <fieldset>
             <legend className={label}>Where are you going?</legend>
-            <div className="mt-2.5 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               {EVENTS.map((option) => (
                 <Chip key={option} active={event === option} onClick={() => setEvent(option)}>
+                  {option}
+                </Chip>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className={label}>Shop and style for</legend>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {STYLE_FOR.map((option) => (
+                <Chip key={option} active={styleFor === option} onClick={() => setStyleFor(option)}>
                   {option}
                 </Chip>
               ))}
@@ -206,12 +193,19 @@ export default function OutfitCheck() {
 
           <div className="mt-auto flex flex-wrap items-center gap-4">
             <button type="submit" disabled={loading} className={primaryButton}>
-              {loading ? "Reading your outfit…" : check ? "Check again" : "Check my outfit"}
+              <span className="absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-white/40 opacity-0 blur-md transition-all duration-700 group-hover/button:left-full group-hover/button:opacity-100" />
+              <span className="relative">
+                {loading ? "Styling you…" : check ? "Check again" : "Check my outfit"}
+              </span>
             </button>
-            <p className="text-xs text-muted">Scored on formality, colours, weather and setting.</p>
+            <p className="text-xs text-muted">
+              {loading
+                ? "This can take up to half a minute."
+                : "Score, what to buy instead, hair and grooming."}
+            </p>
           </div>
           {error && (
-            <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm">
+            <p role="alert" className="rounded-xl border border-red-400/40 bg-red-400/10 px-3.5 py-2.5 text-sm">
               {error}
             </p>
           )}
@@ -219,67 +213,20 @@ export default function OutfitCheck() {
       </form>
 
       {check && (
-        <div ref={resultRef} className="animate-rise mt-6 border-t border-line pt-6">
-          <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
-            <ScoreRing score={check.score} />
-            <div className="min-w-0 flex-1">
-              <p className={label}>For {checkedEvent}</p>
-              <p className="mt-1 font-display text-3xl leading-tight sm:text-4xl">{check.verdict}</p>
-              <p className="mt-2 text-sm text-muted">{check.summary}</p>
-            </div>
-          </div>
-
-          <dl className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-            {SCORE_PARTS.map((part) => {
-              const value = check.breakdown[part.key];
-              return (
-                <div key={part.key}>
-                  <div className="flex justify-between text-sm">
-                    <dt>{part.label}</dt>
-                    <dd className="font-semibold tabular-nums">{value}%</dd>
-                  </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-line">
-                    <div
-                      className={`animate-grow h-full rounded-full ${toneFor(value).bar}`}
-                      style={{ width: `${value}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </dl>
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            <Advice
-              title="What works"
-              lines={check.works}
-              mark="✓"
-              markClass="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-            />
-            <Advice
-              title="What doesn't"
-              lines={check.issues}
-              mark="✕"
-              markClass="bg-red-500/15 text-red-700 dark:text-red-300"
-            />
-            <Advice
-              title="How to improve it"
-              lines={check.suggestions}
-              mark="→"
-              markClass="bg-accent-soft text-accent"
-            />
-          </div>
-
-          <div className="mt-4 rounded-2xl bg-accent-soft p-5">
-            <h3 className={label}>Ideal for this event</h3>
-            <p className="mt-2 font-display text-xl leading-snug sm:text-2xl">{check.idealOutfit}</p>
-          </div>
-          <p className="mt-3 text-xs text-muted">
+        <motion.div
+          ref={resultRef}
+          className="mt-8 scroll-mt-24 border-t border-line pt-8"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: EASE }}
+        >
+          <Lookbook key={`${checkedEvent}-${check.score}-${check.summary}`} check={check} event={checkedEvent} />
+          <p className="mt-4 text-xs text-muted">
             {check.weather
               ? `Weather used: ${check.weather.city}, ${check.weather.tempC}°C, ${check.weather.raining ? "rain" : "no rain"}`
               : "Weather not found for this city, so it was scored for mild conditions"}
           </p>
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -79,6 +79,18 @@ export const SCORE_PARTS = [
 
 export type ScoreKey = (typeof SCORE_PARTS)[number]["key"];
 
+export const STYLE_FOR = ["Auto", "Menswear", "Womenswear"] as const;
+
+export type StyleFor = (typeof STYLE_FOR)[number];
+
+export type ShopLink = { store: string; url: string };
+
+export type ShopPiece = {
+  name: string;
+  reason: string;
+  links: ShopLink[];
+};
+
 export type OutfitCheck = {
   score: number;
   verdict: "Great choice" | "Good, with small fixes" | "Needs changes" | "Not suitable";
@@ -88,5 +100,9 @@ export type OutfitCheck = {
   issues: string[];
   suggestions: string[];
   idealOutfit: string;
+  // Pieces that make up the ideal outfit, each with store search links.
+  shop: ShopPiece[];
+  hair: { style: string; how: string };
+  grooming: string[];
   weather: Weather | null;
 };

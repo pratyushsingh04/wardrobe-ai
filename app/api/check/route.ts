@@ -1,6 +1,7 @@
 import { AiError, type ImageMediaType } from "@/lib/ai";
 import { checkOutfit } from "@/lib/checker";
 import { CLOSET_ENABLED, listItems } from "@/lib/db";
+import { STYLE_FOR, type StyleFor } from "@/lib/types";
 import { getWeather } from "@/lib/weather";
 
 // Free models can be slow or need a fallback, so allow more than the default function time.
@@ -17,6 +18,10 @@ export async function POST(request: Request) {
   const event = String(form.get("event") ?? "").trim();
   const details = String(form.get("details") ?? "").trim();
   const city = String(form.get("city") ?? "").trim();
+  const requestedStyle = String(form.get("styleFor") ?? "Auto");
+  const styleFor: StyleFor = STYLE_FOR.includes(requestedStyle as StyleFor)
+    ? (requestedStyle as StyleFor)
+    : "Auto";
 
   if (!(file instanceof File)) {
     return Response.json({ error: "Attach a photo of the outfit." }, { status: 400 });
@@ -40,6 +45,7 @@ export async function POST(request: Request) {
       mediaType: file.type as ImageMediaType,
       event,
       details,
+      styleFor,
       weather: city ? await getWeather(city) : null,
       closet: CLOSET_ENABLED ? listItems().filter((item) => item.tagged) : [],
     });
