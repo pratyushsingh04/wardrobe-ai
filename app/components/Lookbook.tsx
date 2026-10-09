@@ -2,7 +2,14 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { SCORE_PARTS, type OutfitCheck, type ShopPiece } from "@/lib/types";
+import {
+  SCORE_PARTS,
+  type BeautyResult,
+  type Loadable,
+  type ShopPiece,
+  type ShopResult,
+  type VerdictResult,
+} from "@/lib/types";
 import { CountUp, EASE } from "./motion";
 import { ghostButton, label } from "./ui";
 
@@ -93,7 +100,7 @@ function Advice({ title, lines, mark, markClass }: AdviceProps) {
   );
 }
 
-function VerdictPage({ check, event }: { check: OutfitCheck; event: string }) {
+function VerdictPage({ check, event }: { check: VerdictResult; event: string }) {
   return (
     <>
       <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
@@ -175,7 +182,7 @@ function ProductGrid({ products }: { products: ShopPiece[] }) {
 
 const SEARCH_NOTE = "Each button opens that store's search results. Prices and stock are on the store.";
 
-function ShopPage({ check }: { check: OutfitCheck }) {
+function ShopPage({ check }: { check: ShopResult }) {
   return (
     <>
       <p className={label}>Wear this instead</p>
@@ -188,7 +195,7 @@ function ShopPage({ check }: { check: OutfitCheck }) {
   );
 }
 
-function HairPage({ check }: { check: OutfitCheck }) {
+function HairPage({ check }: { check: BeautyResult }) {
   const [topPick, ...others] = check.hairstyles;
   if (!topPick) return <p className="text-sm text-muted">No hairstyle ideas came back for this one.</p>;
   return (
@@ -238,7 +245,7 @@ function HairPage({ check }: { check: OutfitCheck }) {
   );
 }
 
-function MakeupPage({ check }: { check: OutfitCheck }) {
+function MakeupPage({ check }: { check: BeautyResult }) {
   const { makeup } = check;
   return (
     <>
@@ -282,7 +289,55 @@ function MakeupPage({ check }: { check: OutfitCheck }) {
   );
 }
 
-export default function Lookbook({ check, event }: { check: OutfitCheck; event: string }) {
+// Shows a page once its part has arrived, and a shimmer or the error until then.
+function Pending<T>({
+  part,
+  waiting,
+  children,
+}: {
+  part: Loadable<T>;
+  waiting: string;
+  children: (data: T) => React.ReactNode;
+}) {
+  if (part.status === "ready") return children(part.data);
+  if (part.status === "error") {
+    return (
+      <p role="alert" className="rounded-xl border border-red-400/40 bg-red-400/10 px-3.5 py-2.5 text-sm">
+        {part.message} Press “Check again” to retry.
+      </p>
+    );
+  }
+  return (
+    <div aria-busy="true">
+      <p className={`${label} flex items-center gap-2`}>
+        <span className="h-1.5 w-1.5 animate-ping rounded-full bg-accent" />
+        {waiting}
+      </p>
+      <div className="mt-4 h-10 w-3/4 animate-pulse rounded-xl bg-line" />
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        {[0, 1, 2, 3].map((index) => (
+          <div
+            key={index}
+            className="h-28 animate-pulse rounded-2xl bg-line/70"
+            style={{ animationDelay: `${index * 120}ms` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type LookbookProps = {
+  verdict: VerdictResult;
+  shop: Loadable<ShopResult>;
+  beauty: Loadable<BeautyResult>;
+  event: string;
+};
+
+export default function Lookbook({ verdict, shop, beauty, event }: LookbookProps) {
+  // Which part each page waits on; the verdict is always there by the time the lookbook shows.
+  const pageLoading = [false, shop.status === "loading", beauty.status === "loading", beauty.status === "loading"];
+
   const [[page, direction], setPage] = useState<[number, number]>([0, 1]);
 
   function go(next: number) {
@@ -314,6 +369,12 @@ export default function Lookbook({ check, event }: { check: OutfitCheck; event: 
               <span className="relative">
                 <span className="mr-1.5 opacity-70">{String(index + 1).padStart(2, "0")}</span>
                 {title}
+                {pageLoading[index] && (
+                  <span
+                    aria-label="still loading"
+                    className="ml-2 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current align-middle"
+                  />
+                )}
               </span>
             </button>
           ))}
@@ -336,10 +397,22 @@ export default function Lookbook({ check, event }: { check: OutfitCheck; event: 
             transition={{ duration: 0.55, ease: [0.65, 0, 0.35, 1] }}
             className="rounded-3xl border border-line bg-surface p-5 shadow-[0_40px_80px_-50px_black] [backface-visibility:hidden] sm:p-8"
           >
-            {page === 0 && <VerdictPage check={check} event={event} />}
-            {page === 1 && <ShopPage check={check} />}
-            {page === 2 && <HairPage check={check} />}
-            {page === 3 && <MakeupPage check={check} />}
+            {page === 0 && <VerdictPage check={verdict} event={event} />}
+            {page === 1 && (
+              <Pending part={shop} waiting="Picking better pieces…">
+                {(data) => <ShopPage check={data} />}
+              </Pending>
+            )}
+            {page === 2 && (
+              <Pending part={beauty} waiting="Styling your hair…">
+                {(data) => <HairPage check={data} />}
+              </Pending>
+            )}
+            {page === 3 && (
+              <Pending part={beauty} waiting="Building the look…">
+                {(data) => <MakeupPage check={data} />}
+              </Pending>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

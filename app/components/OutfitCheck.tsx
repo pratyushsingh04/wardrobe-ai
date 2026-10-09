@@ -3,7 +3,16 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { resizePhoto } from "@/lib/resize";
-import { EVENTS, STYLE_FOR, type OutfitCheck as Check, type StyleFor } from "@/lib/types";
+import {
+  EVENTS,
+  STYLE_FOR,
+  type BeautyResult,
+  type CheckPart,
+  type Loadable,
+  type ShopResult,
+  type StyleFor,
+  type VerdictResult,
+} from "@/lib/types";
 import Lookbook from "./Lookbook";
 import { EASE } from "./motion";
 import { card, Chip, field, label, primaryButton } from "./ui";
@@ -27,7 +36,12 @@ export default function OutfitCheck() {
   const [checkedEvent, setCheckedEvent] = useState<string>(EVENTS[0]);
   const [styleFor, setStyleFor] = useState<StyleFor>("Auto");
   const [details, setDetails] = useState("");
-  const [check, setCheck] = useState<Check | null>(null);
+  const [check, setCheck] = useState<VerdictResult | null>(null);
+  const [shop, setShop] = useState<Loadable<ShopResult>>({ status: "loading" });
+  const [beauty, setBeauty] = useState<Loadable<BeautyResult>>({ status: "loading" });
+  // Each press of the button is a run; answers from an older run are ignored.
+  const run = useRef(0);
+  const [shownRun, setShownRun] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingLine, setLoadingLine] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -79,9 +93,24 @@ export default function OutfitCheck() {
     setLoadingLine(0);
     setLoading(true);
     setError(null);
+    const thisRun = ++run.current;
+    setShop({ status: "loading" });
+    setBeauty({ status: "loading" });
+
+    let resized: Blob;
     try {
+      resized = await resizePhoto(photo);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not read this photo.");
+      setLoading(false);
+      return;
+    }
+
+    // All three parts are requested at once; each fills in as soon as it lands.
+    async function ask<T>(part: CheckPart): Promise<T> {
       const body = new FormData();
-      body.append("photo", await resizePhoto(photo), "outfit.jpg");
+      body.append("photo", resized, "outfit.jpg");
+      body.append("part", part);
       body.append("event", event);
       body.append("details", details);
       body.append("city", city);
@@ -89,11 +118,30 @@ export default function OutfitCheck() {
       const res = await fetch("/api/check", { method: "POST", body });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      return data.result;
+    }
+    const messageOf = (err: unknown) =>
+      err instanceof Error ? err.message : "Could not check this outfit.";
+
+    ask<ShopResult>("shop").then(
+      (data) => thisRun === run.current && setShop({ status: "ready", data }),
+      (err) => thisRun === run.current && setShop({ status: "error", message: messageOf(err) }),
+    );
+    ask<BeautyResult>("beauty").then(
+      (data) => thisRun === run.current && setBeauty({ status: "ready", data }),
+      (err) => thisRun === run.current && setBeauty({ status: "error", message: messageOf(err) }),
+    );
+
+    try {
+      const verdict = await ask<VerdictResult>("verdict");
+      if (thisRun !== run.current) return;
       setCheckedEvent(event);
-      setCheck(data.check);
+      setShownRun(thisRun);
+      setCheck(verdict);
     } catch (err) {
+      if (thisRun !== run.current) return;
       setCheck(null);
-      setError(err instanceof Error ? err.message : "Could not check this outfit.");
+      setError(messageOf(err));
     }
     setLoading(false);
   }
@@ -201,7 +249,7 @@ export default function OutfitCheck() {
             </button>
             <p className="text-xs text-muted">
               {loading
-                ? "Usually under ten seconds."
+                ? "The score lands in a few seconds."
                 : "Score, what to buy instead, hair and makeup."}
             </p>
           </div>
@@ -221,7 +269,7 @@ export default function OutfitCheck() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: EASE }}
         >
-          <Lookbook key={`${checkedEvent}-${check.score}-${check.summary}`} check={check} event={checkedEvent} />
+          <Lookbook key={shownRun} verdict={check} shop={shop} beauty={beauty} event={checkedEvent} />
           <p className="mt-4 text-xs text-muted">
             {check.weather
               ? `Weather used: ${check.weather.city}, ${check.weather.tempC}°C, ${check.weather.raining ? "rain" : "no rain"}`

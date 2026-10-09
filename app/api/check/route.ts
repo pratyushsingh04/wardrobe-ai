@@ -1,7 +1,7 @@
 import { AiError, type ImageMediaType } from "@/lib/ai";
-import { checkOutfit } from "@/lib/checker";
+import { checkBeauty, checkShop, checkVerdict, type CheckInput } from "@/lib/checker";
 import { CLOSET_ENABLED, listItems } from "@/lib/db";
-import { STYLE_FOR, type StyleFor } from "@/lib/types";
+import { CHECK_PARTS, STYLE_FOR, type CheckPart, type StyleFor } from "@/lib/types";
 import { getWeather } from "@/lib/weather";
 
 // Free models can be slow or need a fallback, so allow more than the default function time.
@@ -12,6 +12,13 @@ const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp"];
 // The Claude API accepts images up to 5 MB each.
 const MAX_BYTES = 5 * 1024 * 1024;
 
+const RUNNERS: Record<CheckPart, (input: CheckInput) => Promise<unknown>> = {
+  verdict: checkVerdict,
+  shop: checkShop,
+  beauty: checkBeauty,
+};
+
+// One call per lookbook part. The page sends all three at once and fills in each as it lands.
 export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("photo");
@@ -22,6 +29,11 @@ export async function POST(request: Request) {
   const styleFor: StyleFor = STYLE_FOR.includes(requestedStyle as StyleFor)
     ? (requestedStyle as StyleFor)
     : "Auto";
+  const requestedPart = String(form.get("part") ?? "verdict");
+  if (!CHECK_PARTS.includes(requestedPart as CheckPart)) {
+    return Response.json({ error: "Unknown part." }, { status: 400 });
+  }
+  const part = requestedPart as CheckPart;
 
   if (!(file instanceof File)) {
     return Response.json({ error: "Attach a photo of the outfit." }, { status: 400 });
@@ -44,16 +56,17 @@ export async function POST(request: Request) {
       file.arrayBuffer(),
       city ? getWeather(city) : null,
     ]);
-    const check = await checkOutfit({
+    const result = await RUNNERS[part]({
       image: Buffer.from(bytes),
       mediaType: file.type as ImageMediaType,
       event,
       details,
       styleFor,
       weather,
-      closet: CLOSET_ENABLED ? listItems().filter((item) => item.tagged) : [],
+      // Only the verdict mentions closet items, so the other parts skip the lookup.
+      closet: part === "verdict" && CLOSET_ENABLED ? listItems().filter((item) => item.tagged) : [],
     });
-    return Response.json({ check });
+    return Response.json({ result });
   } catch (err) {
     if (!(err instanceof AiError)) throw err;
     return Response.json({ error: err.message }, { status: 503 });

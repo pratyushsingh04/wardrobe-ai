@@ -91,7 +91,12 @@ export type ShopPiece = {
   links: ShopLink[];
 };
 
-export type OutfitCheck = {
+// A check comes back in three parts, each from its own request.
+export const CHECK_PARTS = ["verdict", "shop", "beauty"] as const;
+
+export type CheckPart = (typeof CHECK_PARTS)[number];
+
+export type VerdictResult = {
   score: number;
   verdict: "Great choice" | "Good, with small fixes" | "Needs changes" | "Not suitable";
   breakdown: Record<ScoreKey, number>;
@@ -99,9 +104,16 @@ export type OutfitCheck = {
   works: string[];
   issues: string[];
   suggestions: string[];
+  weather: Weather | null;
+};
+
+export type ShopResult = {
   idealOutfit: string;
   // Pieces that make up the ideal outfit, each with store search links.
   shop: ShopPiece[];
+};
+
+export type BeautyResult = {
   // The first hairstyle is the top pick; the rest are alternatives.
   hairstyles: { name: string; why: string; how: string }[];
   hairProducts: ShopPiece[];
@@ -112,5 +124,10 @@ export type OutfitCheck = {
     steps: { area: string; tip: string }[];
     products: ShopPiece[];
   };
-  weather: Weather | null;
 };
+
+// A lookbook part that may still be on its way.
+export type Loadable<T> =
+  | { status: "loading" }
+  | { status: "ready"; data: T }
+  | { status: "error"; message: string };
